@@ -1,0 +1,26 @@
+version: "3"
+services:
+  app:
+    image: golang:1.14.6-alpine3.11
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: go run cmd/kiddy-line-processor/main.go
+    links:
+      - redis
+    environment:
+      UPD_INTERVAL_FOOTBALL: 3
+      UPD_INTERVAL_SOCCER: 2
+      UPD_INTERVAL_BASEBALL: 5
+      SERVER_HOST: localhost
+      SERVER_PORT: 8080
+      DB_USERNAME:
+      DB_PASSWORD:
+      DB_HOST: localhost
+      DB_PORT: 6379
+      LOG_LEVEL: debug
+    ports:
+      - "127.0.0.1:8080:8081"
+
+  redis:
+    image: redis:6.0.6-alpine

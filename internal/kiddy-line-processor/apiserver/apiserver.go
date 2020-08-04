@@ -35,7 +35,7 @@ func Start(s *APIServer) error {
 	if err := s.configureLogger(); err != nil {
 		return err
 	}
-	s.logger.Info("starting API server")
+	s.logger.Info("starting API server at ", s.cfg.Server.Host, ":", s.cfg.Server.Port)
 
 	st := store.NewStore(fmt.Sprintf("%s:%s", s.cfg.Database.Host, s.cfg.Database.Port),
 		s.cfg.Database.Password)
