@@ -73,7 +73,7 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 
 func (s *server) healthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.respond(w, r, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, http.StatusOK)
 	}
 }
 

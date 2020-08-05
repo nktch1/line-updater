@@ -2,10 +2,10 @@ package model
 
 import "fmt"
 
-type sport uint
+type sport int
 type Sport interface {
 	fmt.Stringer
-	CalExpr() uint
+	CalExpr() int
 	disabler()
 }
 
@@ -20,16 +20,16 @@ var (
 func (s sport) String() string {
 	switch s {
 	case Soccer:
-		return "soccer"
+		return "SOCCER"
 	case Football:
-		return "football"
+		return "FOOTBALL"
 	case Baseball:
-		return "baseball"
+		return "BASEBALL"
 	}
 	return "-"
 }
 
-func (s sport) CalExpr() uint {
+func (s sport) CalExpr() int {
 	switch s {
 	case Soccer:
 		return 0

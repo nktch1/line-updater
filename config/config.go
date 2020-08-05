@@ -23,6 +23,9 @@ type Config struct {
 	Log struct {
 		Level string `envconfig:"LOG_LEVEL"`
 	}
+	LineProvider struct {
+		URL string `envconfig:"LINE_PROVIDER_API_URL"`
+	}
 }
 
 func NewConfig() *Config {

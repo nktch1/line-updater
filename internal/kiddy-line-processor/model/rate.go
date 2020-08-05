@@ -6,6 +6,10 @@ import (
 	"strconv"
 )
 
+type RatePooler interface {
+	PoolRate(in, out chan Rate) error
+}
+
 type Rate struct {
 	RateType  Sport
 	RateValue float64
