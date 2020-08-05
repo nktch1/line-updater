@@ -6,7 +6,7 @@ on:
 
 jobs:
   Hello:
-    runs-on: alpine3.11
+    runs-on: ubuntu-18.04
     steps:
       - name: test
         run: go test -v -race -timeout 30s ./...
