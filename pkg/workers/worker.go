@@ -3,7 +3,7 @@ package workers
 import (
 	"fmt"
 	"github.com/nikitych1w/softpro-task/config"
-	"github.com/nikitych1w/softpro-task/internal/kiddy-line-processor/model"
+	"github.com/nikitych1w/softpro-task/pkg/model"
 	"github.com/sirupsen/logrus"
 	"strings"
 )
@@ -46,6 +46,6 @@ func New(cfg *config.Config, w []model.Sport) *BackgroundWorkers {
 }
 
 func (w *BackgroundWorkers) RunWorkers() error {
-
+	// TO DO
 	return nil
 }

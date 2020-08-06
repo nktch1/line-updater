@@ -2,9 +2,10 @@ package main
 
 import (
 	"github.com/nikitych1w/softpro-task/config"
-	"github.com/nikitych1w/softpro-task/internal/kiddy-line-processor/apiserver"
-	"github.com/nikitych1w/softpro-task/internal/kiddy-line-processor/model"
-	"github.com/nikitych1w/softpro-task/internal/kiddy-line-processor/workers"
+	"github.com/nikitych1w/softpro-task/pkg/apiserver"
+	"github.com/nikitych1w/softpro-task/pkg/model"
+	"github.com/nikitych1w/softpro-task/pkg/rpcserver"
+	"github.com/nikitych1w/softpro-task/pkg/workers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,10 @@ func main() {
 
 	as := apiserver.New(cfg)
 	err = apiserver.Start(as)
+
+	rpc, _ := rpcserver.New(cfg)
+	err = rpc.Start()
+
 	if err != nil {
 		logrus.Fatal(err)
 	}

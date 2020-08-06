@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package proto;
+
+message Request {
+  repeated string sports = 1;
+  string timeUpd = 2;
+}
+
+message Response {
+  message Line {
+    string type = 1;
+    string value = 2;
+  }
+  repeated Line resp = 1;
+}
+
+service LineProcessor {
+  rpc SubscribeOnSportsLines(Request) returns (Response);
+}

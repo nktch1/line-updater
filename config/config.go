@@ -26,6 +26,9 @@ type Config struct {
 	LineProvider struct {
 		URL string `envconfig:"LINE_PROVIDER_API_URL"`
 	}
+	ServerRPC struct {
+		Port string `envconfig:"RPC_SERVER_PORT"`
+	}
 }
 
 func NewConfig() *Config {
