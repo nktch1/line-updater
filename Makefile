@@ -8,7 +8,7 @@ test:
 
 .PHONY: generate
 generate:
-	protoc1 --proto_path=proto --go_out=plugins=grpc:./pkg/rpcserver lineProcessor.proto
+	protoc --proto_path=proto --go_out=plugins=grpc:./internal/rpcserver lineProcessor.proto
 
 .PHONY: lint
 lint:
