@@ -56,17 +56,17 @@ func (s *RPCServer) ListenAndServe(url string, ctx context.Context) error {
 	return s.srv.Serve(s.listener)
 }
 
-type tmp struct {
-	val, res float32
+type rawToDelta struct {
+	raw, delta float32
 }
-type t struct {
-	r    *Request
-	prev map[string]tmp
+type requestAndPreviousDelta struct {
+	req  *Request
+	prev map[string]rawToDelta
 }
 
 func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) error {
-	subscribeRequests := make(chan t)
-	prevResp := make(map[string]tmp)
+	subscribeRequests := make(chan requestAndPreviousDelta)
+	prevResp := make(map[string]rawToDelta)
 
 	go func() {
 		for {
@@ -78,8 +78,8 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 				fmt.Println("GRPC stream:", err)
 			}
 
-			subscribeRequests <- t{
-				r:    in,
+			subscribeRequests <- requestAndPreviousDelta{
+				req:  in,
 				prev: prevResp,
 			}
 		}
@@ -90,21 +90,21 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 		var err error
 
 		rp := reqParams{}
-		rp.sportsToUpdate = request.r.GetSports()
+		rp.sportsToUpdate = request.req.GetSports()
 
-		if val, err = strconv.Atoi(request.r.GetTimeUpd()); err != nil {
-			s.logger.Errorf("GRPC stream: (can't convert interval value | [%s])", err.Error())
+		if val, err = strconv.Atoi(request.req.GetTimeUpd()); err != nil {
+			s.logger.Errorf("GRPC stream: (can'requestAndPreviousDelta convert interval value | [%s])", err.Error())
 		}
 		rp.updTime = val
 
 		s.wg.Add(1)
-		go func(rp reqParams, prevResp map[string]tmp) {
+		go func(rp reqParams, prevResp map[string]rawToDelta) {
 			defer s.wg.Done()
 			for range time.Tick(time.Duration(rp.updTime) * time.Second) {
 				data := s.buildResponse(rp, prevResp)
 				respData := make(map[string]float32)
 				for k, v := range data {
-					respData[k] = v.res
+					respData[k] = v.delta
 				}
 
 				if err := stream.Send(&Response{Line: respData}); err != nil {
@@ -125,9 +125,9 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 	return nil
 }
 
-func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]tmp) map[string]tmp {
+func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) map[string]rawToDelta {
 	logrus.Println(prevResp)
-	currResp := make(map[string]tmp)
+	currResp := make(map[string]rawToDelta)
 	var prevKeys []string
 
 	if len(prevResp) > 0 {
@@ -144,15 +144,15 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]tmp) map[str
 
 		var res float32
 		if len(prevResp) > 0 && compareSlice(prevKeys, rp.sportsToUpdate) {
-			res = val - prevResp[el].res
+			res = val - prevResp[el].delta
 		} else {
 			res = val
 		}
 
 		s.mtx.Lock()
-		currResp[el] = tmp{
-			val: val,
-			res: res,
+		currResp[el] = rawToDelta{
+			raw:   val,
+			delta: res,
 		}
 		s.mtx.Unlock()
 	}
