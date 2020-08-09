@@ -11,4 +11,4 @@ jobs:
       - name: test
         run: go test -v -race -timeout 30s ./...
       - name: build
-        run: go build -v ./cmd/kiddy-line-processor
+        run: go build -v ./cmd/lineProcessor

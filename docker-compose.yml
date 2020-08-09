@@ -5,28 +5,32 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: go run cmd/kiddy-line-processor/main.go
+    command: go run cmd/lineProcessor/main.go
     links:
       - redis
       - lineprovider
     environment:
-      UPD_INTERVAL_FOOTBALL: 3
+      UPD_INTERVAL_FOOTBALL: 1
       UPD_INTERVAL_SOCCER: 2
-      UPD_INTERVAL_BASEBALL: 5
+      UPD_INTERVAL_BASEBALL: 3
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8080
-      RPC_SERVER_PORT: 4567
+      RPC_SERVER_HOST:
+      RPC_SERVER_PORT: 8888
       DB_USERNAME:
       DB_PASSWORD:
-      DB_HOST:
+      DB_HOST: redis
       DB_PORT: 6379
       LOG_LEVEL: debug
       LINE_PROVIDER_API_URL: http://lineprovider:8000/api/v1/lines
     ports:
       - "8080:8080"
+      - "8888:8888"
 
   redis:
     image: redis:6.0.6-alpine
+    ports:
+      - "6379:6379"
 
   lineprovider:
     image: antonboom/lines-provider

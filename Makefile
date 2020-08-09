@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	go build -v ./cmd/kiddy-line-processor
+	go build -v ./cmd/lineProcessor -o lineProcessor
 
 .PHONY: test
 test:
@@ -8,11 +8,11 @@ test:
 
 .PHONY: generate
 generate:
-	./protoc/bin/protoc --proto_path=proto --go_out=plugins=grpc:proto lineProcessor.proto
+	protoc1 --proto_path=proto --go_out=plugins=grpc:./pkg/rpcserver lineProcessor.proto
 
 .PHONY: lint
 lint:
-	#docker-compose up
+	golint ./...
 
 .PHONY: run
 run:
@@ -23,4 +23,3 @@ stop:
 	docker-compose down
 
 .DEFAULT_GOAL := build
-

@@ -17,8 +17,8 @@ type Config struct {
 	Database struct {
 		Username string `envconfig:"DB_USERNAME"`
 		Password string `envconfig:"DB_PASSWORD"`
-		Port     string `envconfig:"DB_PORT"`
 		Host     string `envconfig:"DB_HOST"`
+		Port     string `envconfig:"DB_PORT"`
 	}
 	Log struct {
 		Level string `envconfig:"LOG_LEVEL"`
@@ -26,12 +26,13 @@ type Config struct {
 	LineProvider struct {
 		URL string `envconfig:"LINE_PROVIDER_API_URL"`
 	}
-	ServerRPC struct {
+	RPCServer struct {
+		Host string `envconfig:"RPC_SERVER_HOST"`
 		Port string `envconfig:"RPC_SERVER_PORT"`
 	}
 }
 
-func NewConfig() *Config {
+func New() *Config {
 	var cfg Config
 	err := envconfig.Process("", &cfg)
 	if err != nil {

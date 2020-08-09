@@ -3,4 +3,5 @@ RUN mkdir /app
 ADD . /app
 WORKDIR /app
 EXPOSE 8080
-RUN go build -v ./cmd/kiddy-line-processor
+EXPOSE 8888
+RUN go build -v ./cmd/lineProcessor -o lineProcessor

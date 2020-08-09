@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type RatePooler interface {
@@ -24,7 +25,7 @@ func (r *Rate) UnmarshalJSON(b []byte) error {
 
 	if data, ok := x["lines"]; ok {
 		for rType, rValue := range data {
-			r.RateType = NewSport(rType)
+			r.RateType = NewSport(strings.ToLower(rType))
 			val, err := strconv.ParseFloat(rValue, 64)
 			if err != nil {
 				return fmt.Errorf("conversing bla bla error | [%v]", err.Error())

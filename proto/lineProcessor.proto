@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto;
+package rpcserver;
 
 message Request {
   repeated string sports = 1;
@@ -8,13 +8,10 @@ message Request {
 }
 
 message Response {
-  message Line {
-    string type = 1;
-    string value = 2;
-  }
-  repeated Line resp = 1;
+  map<string, float> line = 1;
 }
 
 service LineProcessor {
-  rpc SubscribeOnSportsLines(Request) returns (Response);
+  rpc SubscribeOnSportsLines(stream Request) returns (stream Response);
 }
+

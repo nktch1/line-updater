@@ -1,9 +1,9 @@
-package apiserver
+package httpserver
 
 import (
 	"encoding/json"
-	"github.com/nikitych1w/softpro-task/config"
-	"github.com/nikitych1w/softpro-task/internal/kiddy-line-processor/store"
+	"github.com/nikitych1w/softpro-task/internal/config"
+	"github.com/nikitych1w/softpro-task/pkg/store"
 	"net/http"
 	"time"
 
@@ -19,12 +19,12 @@ type server struct {
 	config *config.Config
 }
 
-func newServer(store *store.Store) *server {
+func NewHTTPServer(store *store.Store) *server {
 	s := &server{
 		router: mux.NewRouter(),
 		logger: logrus.New(),
 		store:  store,
-		config: config.NewConfig(),
+		config: config.New(),
 	}
 
 	s.configureRouter()
@@ -73,11 +73,17 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 
 func (s *server) healthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.respond(w, r, http.StatusOK, http.StatusOK)
+		var status int
+		if err := s.store.Ping(); err != nil {
+			status = http.StatusServiceUnavailable
+		} else {
+			status = http.StatusOK
+		}
+		s.respond(w, r, status, status)
 	}
 }
 
-func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+func (s *server) respond(w http.ResponseWriter, _ *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
 	if data != nil {
 		json.NewEncoder(w).Encode(data)

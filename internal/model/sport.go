@@ -20,11 +20,11 @@ var (
 func (s sport) String() string {
 	switch s {
 	case Soccer:
-		return "SOCCER"
+		return "soccer"
 	case Football:
-		return "FOOTBALL"
+		return "football"
 	case Baseball:
-		return "BASEBALL"
+		return "baseball"
 	}
 	return "-"
 }
@@ -44,11 +44,11 @@ func (s sport) CalExpr() int {
 func NewSport(strSport string) Sport {
 	var s Sport
 	switch strSport {
-	case "SOCCER":
+	case "soccer":
 		s = Soccer
-	case "FOOTBALL":
+	case "football":
 		s = Football
-	case "BASEBALL":
+	case "baseball":
 		s = Baseball
 	}
 	// default value
