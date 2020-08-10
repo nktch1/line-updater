@@ -43,6 +43,7 @@ type requestAndPreviousDelta struct {
 	prev map[string]rawToDelta
 }
 
+// конструктор для rpc сервера
 func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCServer {
 	var s RPCServer
 
@@ -56,12 +57,14 @@ func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCS
 	s.url = fmt.Sprintf("%s:%s", s.cfg.RPCServer.Host, s.cfg.RPCServer.Port)
 	s.done = make(chan struct{})
 
+	// регистрация сервера для обработки grpc запросов
 	RegisterLineProcessorServer(s.Server, &s)
 	reflection.Register(s.Server)
 
 	return &s
 }
 
+// запускает прослушивание порта
 func (s *RPCServer) ListenAndServe() error {
 	var err error
 	s.listener, err = net.Listen("tcp", s.url)
@@ -72,10 +75,12 @@ func (s *RPCServer) ListenAndServe() error {
 	return s.Server.Serve(s.listener)
 }
 
+// регистрирует запросы и обрабатывает их
 func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) error {
 	subscribeRequests := make(chan requestAndPreviousDelta)
 	prevResp := make(map[string]rawToDelta)
 
+	// запись подписок в канал
 	go func() {
 		for {
 			in, err := stream.Recv()
@@ -95,6 +100,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 		}
 	}()
 
+	// чтение из канала, сравнение с предыдущим значение и высчитывание дельты
 	for request := range subscribeRequests {
 		var val int
 		var err error
@@ -138,7 +144,6 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 				}
 			}
 		}(rp, request.prev)
-
 	}
 
 	s.wg.Wait()
@@ -146,6 +151,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 	return nil
 }
 
+// создает ответ для отдачи в стрим
 func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) map[string]rawToDelta {
 	currResp := make(map[string]rawToDelta)
 
@@ -174,6 +180,7 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 	return currResp
 }
 
+// endpoint из .proto
 func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSportsLinesServer) error {
 	err := s.process(stream)
 	if err != nil {
@@ -183,6 +190,7 @@ func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSport
 	return nil
 }
 
+// корректное завершение работы GRPC сервера
 func (s *RPCServer) Shutdown(ctx context.Context) error {
 	s.logger.Infof("		========= [RPC server is stopping...]")
 

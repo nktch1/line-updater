@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// конструктор для логгера
 func New(cfg *config.Config) *logrus.Logger {
 	l := logrus.New()
 	lvl, _ := logrus.ParseLevel(cfg.Log.Level)

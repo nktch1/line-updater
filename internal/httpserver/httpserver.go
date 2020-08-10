@@ -24,6 +24,7 @@ type httpserver struct {
 	url    string
 }
 
+// конструктор для http сервера
 func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *httpserver {
 	s := &httpserver{
 		router: mux.NewRouter(),
@@ -39,15 +40,18 @@ func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *h
 	return s
 }
 
+// реализация метода интерфейса
 func (s *httpserver) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
+// добавляет обработчик GET запроса и middleware для логгирования
 func (s *httpserver) configureRouter() {
 	s.router.Use(s.logRequest)
 	s.router.HandleFunc("/ready", s.healthCheck()).Methods("GET")
 }
 
+// настройка параметров логгирования для http сервера
 func (s *httpserver) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := s.logger.WithFields(logrus.Fields{
@@ -78,6 +82,7 @@ func (s *httpserver) logRequest(next http.Handler) http.Handler {
 	})
 }
 
+// endpoint, который показывает статус хранилища
 func (s *httpserver) healthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var status int
@@ -93,10 +98,15 @@ func (s *httpserver) healthCheck() http.HandlerFunc {
 func (s *httpserver) respond(w http.ResponseWriter, _ *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
 	if data != nil {
-		json.NewEncoder(w).Encode(data)
+		err := json.NewEncoder(w).Encode(data)
+		if err != nil {
+			s.logger.Errorf("encode error | [%s]", err.Error())
+			return
+		}
 	}
 }
 
+// корректное завершение работы http сервера
 func (s *httpserver) Shutdown(ctx context.Context) error {
 	if err := s.Server.Shutdown(ctx); err != nil {
 		return err

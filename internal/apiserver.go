@@ -22,6 +22,7 @@ type APIServer struct {
 	store  *store.Store
 }
 
+// конструктор api сервера
 func NewAPIServer(ctx context.Context) *APIServer {
 	var as APIServer
 	as.ctx = ctx
@@ -32,6 +33,8 @@ func NewAPIServer(ctx context.Context) *APIServer {
 	return &as
 }
 
+// метод отвечает за инициализацию воркеров и серверов, дожидается окончания их работы и корректно
+// завершает их
 func (s *APIServer) Start() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
@@ -39,8 +42,7 @@ func (s *APIServer) Start() error {
 	rpcServer := rpcserver.NewRPCServer(s.cfg, s.logger, s.store)
 	httpServer := httpserver.NewHTTPServer(s.cfg, s.logger, s.store)
 
-	// just graceful shutdown test
-
+	// тест корректного завершения всех воркеров, rpc сервера и http сервера
 	//time.AfterFunc(20 * time.Second, func() {
 	//	stop <- os.Signal(os.Interrupt)
 	//})

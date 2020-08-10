@@ -27,6 +27,7 @@ type BackgroundWorkers struct {
 	done    chan struct{}
 }
 
+// конструктор для воркеров
 func New(cfg *config.Config, lg *logrus.Logger, cache *store.Store, w []model.Sport) *BackgroundWorkers {
 	var bckWorkers BackgroundWorkers
 	bckWorkers.cache = cache
@@ -59,6 +60,7 @@ func New(cfg *config.Config, lg *logrus.Logger, cache *store.Store, w []model.Sp
 	return &bckWorkers
 }
 
+// генерирует канал воркеров
 func (w *BackgroundWorkers) gen() <-chan worker {
 	out := make(chan worker)
 	go func() {
@@ -70,6 +72,7 @@ func (w *BackgroundWorkers) gen() <-chan worker {
 	return out
 }
 
+// выполняет запросы к line-provider и отправляет ответы в каналы
 func (w *BackgroundWorkers) getRate(in <-chan worker) <-chan model.Rate {
 	out := make(chan model.Rate)
 	go func() {
@@ -82,16 +85,19 @@ func (w *BackgroundWorkers) getRate(in <-chan worker) <-chan model.Rate {
 						err = e
 					}
 					w.logger.Errorf("bad request to line-provider | [%s]", err.Error())
+					return
 				}
 
 				body, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
 					w.logger.Errorf("can't read line-provider's response | [%s]", err.Error())
+					return
 				}
 
 				err = rate.UnmarshalJSON(body)
 				if err != nil {
 					w.logger.Errorf("can't unmarshal line-provider's response | [%s]", err.Error())
+					return
 				}
 
 				resp.Body.Close()
@@ -105,6 +111,7 @@ func (w *BackgroundWorkers) getRate(in <-chan worker) <-chan model.Rate {
 	return out
 }
 
+// сливает каналы с линиями по каждому из спортов
 func merge(rates ...<-chan model.Rate) <-chan model.Rate {
 	var wg sync.WaitGroup
 	out := make(chan model.Rate)
@@ -127,6 +134,7 @@ func merge(rates ...<-chan model.Rate) <-chan model.Rate {
 	return out
 }
 
+// проходит по списку спортов и для каждого запрашивает значения у line-provider
 func (w *BackgroundWorkers) RunWorkers() error {
 	var channels []<-chan model.Rate
 	in := w.gen()
@@ -150,6 +158,7 @@ func (w *BackgroundWorkers) RunWorkers() error {
 	return nil
 }
 
+// корректное завершение работы воркеров
 func (w *BackgroundWorkers) Shutdown(ctx context.Context) error {
 	w.done <- struct{}{}
 	w.logger.Infof("		========= [workers are stopping...]")
