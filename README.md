@@ -5,7 +5,7 @@
 ```sh
 make run
 ```
-Параметры задаются в файле docker-compose.yml. 
+Параметры задаются в файле docker-compose.yml
 * UPD_INTERVAL_FOOTBALL (указывается в секундах)
 * UPD_INTERVAL_SOCCER (указывается в секундах)
 * UPD_INTERVAL_BASEBALL (указывается в секундах)
