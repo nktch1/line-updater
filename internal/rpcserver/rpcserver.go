@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"io"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -27,11 +26,21 @@ type RPCServer struct {
 	ctx      context.Context
 	cfg      *config.Config
 	url      string
+	done     chan struct{}
 }
 
 type reqParams struct {
 	sportsToUpdate []string
 	updTime        int
+}
+
+type rawToDelta struct {
+	raw, delta float32
+}
+
+type requestAndPreviousDelta struct {
+	req  *Request
+	prev map[string]rawToDelta
 }
 
 func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCServer {
@@ -53,7 +62,6 @@ func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCS
 }
 
 func (s *RPCServer) ListenAndServe() error {
-	log.Println("rpc start on", s.url)
 	var err error
 	s.listener, err = net.Listen("tcp", s.url)
 	if err != nil {
@@ -61,14 +69,6 @@ func (s *RPCServer) ListenAndServe() error {
 	}
 
 	return s.Server.Serve(s.listener)
-}
-
-type rawToDelta struct {
-	raw, delta float32
-}
-type requestAndPreviousDelta struct {
-	req  *Request
-	prev map[string]rawToDelta
 }
 
 func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) error {
@@ -80,9 +80,11 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 			in, err := stream.Recv()
 			if err == io.EOF {
 				fmt.Println("GRPC stream: (EOF)")
+				return
 			}
 			if err != nil {
 				fmt.Println("GRPC stream:", err)
+				return
 			}
 
 			subscribeRequests <- requestAndPreviousDelta{
@@ -107,7 +109,8 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 		s.wg.Add(1)
 		go func(rp reqParams, prevResp map[string]rawToDelta) {
 			defer s.wg.Done()
-			for range time.Tick(time.Duration(rp.updTime) * time.Second) {
+
+			for {
 				data := s.buildResponse(rp, prevResp)
 				respData := make(map[string]float32)
 				for k, v := range data {
@@ -116,6 +119,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 
 				if err := stream.Send(&Response{Line: respData}); err != nil {
 					s.logger.Errorf("GRPC stream: (streaming error | [%s])", err.Error())
+					return
 				}
 
 				s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, respData)
@@ -123,8 +127,11 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 				s.mtx.Lock()
 				prevResp = data
 				s.mtx.Unlock()
+
+				time.Sleep(time.Duration(rp.updTime) * time.Second)
 			}
 		}(rp, request.prev)
+
 	}
 
 	s.wg.Wait()

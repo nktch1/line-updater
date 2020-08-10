@@ -8,6 +8,7 @@ import (
 	"github.com/nikitych1w/softpro-task/pkg/store"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -72,19 +73,32 @@ func (w *BackgroundWorkers) gen() <-chan worker {
 func (w *BackgroundWorkers) getRate(in <-chan worker) <-chan model.Rate {
 	out := make(chan model.Rate)
 	go func() {
-
 		for wrk := range in {
 			for {
 				rate := model.Rate{}
-				resp, _ := http.Get(wrk.url)
-				body, _ := ioutil.ReadAll(resp.Body)
-				rate.UnmarshalJSON(body)
+				resp, err := http.Get(wrk.url)
+				if err != nil {
+					if e, ok := err.(net.Error); ok {
+						err = e
+					}
+					w.logger.Errorf("bad request to line-provider | [%s]", err.Error())
+				}
+
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					w.logger.Errorf("can't read line-provider's response | [%s]", err.Error())
+				}
+
+				err = rate.UnmarshalJSON(body)
+				if err != nil {
+					w.logger.Errorf("can't unmarshal line-provider's response | [%s]", err.Error())
+				}
+
 				resp.Body.Close()
 				out <- rate
 				time.Sleep(time.Duration(wrk.updTime) * time.Second)
 			}
 		}
-
 		close(out)
 	}()
 
