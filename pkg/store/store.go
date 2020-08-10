@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/nikitych1w/softpro-task/internal/config"
+	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
@@ -30,7 +31,12 @@ func (s *Store) GetLastValueByKey(key string) (float32, error) {
 		return 0, out.Err()
 	}
 
-	if val, err = strconv.ParseFloat(out.Val()[0], 64); err != nil {
+	if len(out.Val()) > 0 {
+		if val, err = strconv.ParseFloat(out.Val()[0], 64); err != nil {
+			return 0, err
+		}
+	} else {
+		logrus.Errorf("there is no key like this '%s'! GRPC Request is wrong!", key)
 		return 0, err
 	}
 

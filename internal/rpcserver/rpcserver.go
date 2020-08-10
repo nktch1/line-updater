@@ -54,6 +54,7 @@ func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCS
 	s.wg = &sync.WaitGroup{}
 	s.cfg = cfg
 	s.url = fmt.Sprintf("%s:%s", s.cfg.RPCServer.Host, s.cfg.RPCServer.Port)
+	s.done = make(chan struct{})
 
 	RegisterLineProcessorServer(s.Server, &s)
 	reflection.Register(s.Server)
@@ -103,6 +104,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 
 		if val, err = strconv.Atoi(request.req.GetTimeUpd()); err != nil {
 			s.logger.Errorf("GRPC stream: (can'requestAndPreviousDelta convert interval value | [%s])", err.Error())
+			return nil
 		}
 		rp.updTime = val
 
@@ -111,24 +113,29 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 			defer s.wg.Done()
 
 			for {
-				data := s.buildResponse(rp, prevResp)
-				respData := make(map[string]float32)
-				for k, v := range data {
-					respData[k] = v.delta
-				}
-
-				if err := stream.Send(&Response{Line: respData}); err != nil {
-					s.logger.Errorf("GRPC stream: (streaming error | [%s])", err.Error())
+				select {
+				case <-s.done:
 					return
+				default:
+					data := s.buildResponse(rp, prevResp)
+					respData := make(map[string]float32)
+					for k, v := range data {
+						respData[k] = v.delta
+					}
+
+					if err := stream.Send(&Response{Line: respData}); err != nil {
+						s.logger.Errorf("GRPC stream: (streaming error | [%s])", err.Error())
+						return
+					}
+
+					s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, respData)
+
+					s.mtx.Lock()
+					prevResp = data
+					s.mtx.Unlock()
+
+					time.Sleep(time.Duration(rp.updTime) * time.Second)
 				}
-
-				s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, respData)
-
-				s.mtx.Lock()
-				prevResp = data
-				s.mtx.Unlock()
-
-				time.Sleep(time.Duration(rp.updTime) * time.Second)
 			}
 		}(rp, request.prev)
 
@@ -146,6 +153,7 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 		val, err := s.store.GetLastValueByKey(el)
 		if err != nil {
 			s.logger.Errorf("GRPC stream: (getting from store error | [%s])", err.Error())
+			return nil
 		}
 
 		var res float32
@@ -167,12 +175,23 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 }
 
 func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSportsLinesServer) error {
-	s.process(stream)
+	err := s.process(stream)
+	if err != nil {
+		s.logger.Errorf("SubscribeOnSportsLines method error | [%s]", err.Error())
+		return err
+	}
 	return nil
 }
 
 func (s *RPCServer) Shutdown(ctx context.Context) error {
-	s.Server.GracefulStop()
 	s.logger.Infof("		========= [RPC server is stopping...]")
+
+	for {
+		s.done <- struct{}{}
+	}
+
+	s.Server.GracefulStop()
+	s.listener.Close()
+
 	return nil
 }

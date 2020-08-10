@@ -41,7 +41,7 @@ func (s *APIServer) Start() error {
 
 	// just graceful shutdown test
 
-	//time.AfterFunc(10 * time.Second, func() {
+	//time.AfterFunc(20 * time.Second, func() {
 	//	stop <- os.Signal(os.Interrupt)
 	//})
 
@@ -66,12 +66,18 @@ func (s *APIServer) Start() error {
 		}
 	}()
 
-	go func() {
-		s.logger.Infof("		========= [GRPC server is starting...]")
-		if err := rpcServer.ListenAndServe(); err != nil {
-			s.logger.Error(err)
+	for {
+		if err := s.store.Ping(); err == nil {
+			s.logger.Infof("		========= [HTTP server and database are available!]")
+			go func() {
+				s.logger.Infof("		========= [RPC server is starting...]")
+				if err := rpcServer.ListenAndServe(); err != nil {
+					s.logger.Error(err)
+				}
+			}()
+			break
 		}
-	}()
+	}
 
 	<-stop
 
