@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"github.com/nikitych1w/softpro-task/internal/config"
 	"github.com/nikitych1w/softpro-task/internal/httpserver"
 	"github.com/nikitych1w/softpro-task/internal/model"
@@ -11,8 +10,9 @@ import (
 	"github.com/nikitych1w/softpro-task/pkg/logger"
 	store "github.com/nikitych1w/softpro-task/pkg/store"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"sync"
+	"os"
+	"os/signal"
+	"time"
 )
 
 type APIServer struct {
@@ -33,52 +33,62 @@ func NewAPIServer(ctx context.Context) *APIServer {
 }
 
 func (s *APIServer) Start() error {
-	var wg = &sync.WaitGroup{}
-	defer wg.Wait()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
 
-	rpcURL := fmt.Sprintf("%s:%s", s.cfg.RPCServer.Host, s.cfg.RPCServer.Port)
-	httpURL := fmt.Sprintf("%s:%s", s.cfg.Server.Host, s.cfg.Server.Port)
+	rpcServer := rpcserver.NewRPCServer(s.cfg, s.logger, s.store)
+	httpServer := httpserver.NewHTTPServer(s.cfg, s.logger, s.store)
 
-	ctx, _ := context.WithCancel(s.ctx)
+	// just graceful shutdown test
 
-	rpc := rpcserver.NewRPCServer(s.logger, s.store)
-	srv := httpserver.NewHTTPServer(s.store)
+	//time.AfterFunc(10 * time.Second, func() {
+	//	stop <- os.Signal(os.Interrupt)
+	//})
 
-	w := workers.New(s.cfg, []model.Sport{
-		model.NewSport("soccer"),
-		model.NewSport("football"),
-		model.NewSport("baseball"),
-	}, s.store)
+	w := workers.New(s.cfg, s.logger, s.store,
+		[]model.Sport{
+			model.NewSport("soccer"),
+			model.NewSport("football"),
+			model.NewSport("baseball"),
+		})
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		s.logger.Infof("		========= [workers are starting]")
-
-		if err := w.RunWorkers(ctx); err != nil {
+		if err := w.RunWorkers(); err != nil {
 			s.logger.Error(err)
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		s.logger.Infof("		========= [HTTP server is starting at '%s']", httpURL)
-
-		if err := http.ListenAndServe(httpURL, srv); err != nil {
+		s.logger.Infof("		========= [HTTP server is starting...]")
+		if err := httpServer.Server.ListenAndServe(); err != nil {
 			s.logger.Error(err)
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		s.logger.Infof("		========= [GRPC server is starting at '%s']", rpcURL)
-
-		if err := rpc.ListenAndServe(rpcURL, ctx); err != nil {
+		s.logger.Infof("		========= [GRPC server is starting...]")
+		if err := rpcServer.ListenAndServe(); err != nil {
 			s.logger.Error(err)
 		}
 	}()
+
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	if err := w.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	if err := rpcServer.Shutdown(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }

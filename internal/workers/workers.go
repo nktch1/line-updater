@@ -21,12 +21,16 @@ type worker struct {
 type BackgroundWorkers struct {
 	workers []worker
 	cache   *store.Store
+	logger  *logrus.Logger
 	cntr    int
+	done    chan struct{}
 }
 
-func New(cfg *config.Config, w []model.Sport, cache *store.Store) *BackgroundWorkers {
+func New(cfg *config.Config, lg *logrus.Logger, cache *store.Store, w []model.Sport) *BackgroundWorkers {
 	var bckWorkers BackgroundWorkers
 	bckWorkers.cache = cache
+	bckWorkers.logger = lg
+	bckWorkers.done = make(chan struct{})
 
 	for _, el := range w {
 		var updTime int
@@ -68,14 +72,16 @@ func (w *BackgroundWorkers) gen() <-chan worker {
 func (w *BackgroundWorkers) getRate(in <-chan worker) <-chan model.Rate {
 	out := make(chan model.Rate)
 	go func() {
+
 		for wrk := range in {
-			for range time.Tick(time.Duration(wrk.updTime) * time.Second) {
+			for {
 				rate := model.Rate{}
 				resp, _ := http.Get(wrk.url)
 				body, _ := ioutil.ReadAll(resp.Body)
 				rate.UnmarshalJSON(body)
 				resp.Body.Close()
 				out <- rate
+				time.Sleep(time.Duration(wrk.updTime) * time.Second)
 			}
 		}
 
@@ -107,7 +113,7 @@ func merge(rates ...<-chan model.Rate) <-chan model.Rate {
 	return out
 }
 
-func (w *BackgroundWorkers) RunWorkers(ctx context.Context) error {
+func (w *BackgroundWorkers) RunWorkers() error {
 	var channels []<-chan model.Rate
 	in := w.gen()
 
@@ -117,9 +123,8 @@ func (w *BackgroundWorkers) RunWorkers(ctx context.Context) error {
 
 	for n := range merge(channels...) {
 		select {
-		//case <- done:
-		//	logrus.Infof("========================= END")
-		//	return nil
+		case <-w.done:
+			return nil
 		default:
 			if err := w.cache.Set(n.RateType.String(), n.RateValue); err != nil {
 				return fmt.Errorf("cache set error | [%s]", err)
@@ -128,5 +133,11 @@ func (w *BackgroundWorkers) RunWorkers(ctx context.Context) error {
 		}
 	}
 
+	return nil
+}
+
+func (w *BackgroundWorkers) Shutdown(ctx context.Context) error {
+	w.done <- struct{}{}
+	w.logger.Infof("		========= [workers are stopping...]")
 	return nil
 }

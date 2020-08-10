@@ -3,6 +3,7 @@ package rpcserver
 import (
 	"context"
 	"fmt"
+	"github.com/nikitych1w/softpro-task/internal/config"
 	"github.com/nikitych1w/softpro-task/pkg/store"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -17,12 +18,15 @@ import (
 
 type RPCServer struct {
 	listener net.Listener
-	srv      *grpc.Server
+	Server   *grpc.Server
 	logger   *logrus.Logger
 	store    *store.Store
 	prevResp map[string]float32
 	mtx      *sync.Mutex
 	wg       *sync.WaitGroup
+	ctx      context.Context
+	cfg      *config.Config
+	url      string
 }
 
 type reqParams struct {
@@ -30,30 +34,33 @@ type reqParams struct {
 	updTime        int
 }
 
-func NewRPCServer(lg *logrus.Logger, str *store.Store) *RPCServer {
+func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCServer {
 	var s RPCServer
 
 	s.logger = lg
 	s.store = str
 	s.prevResp = make(map[string]float32)
 	s.mtx = &sync.Mutex{}
-	s.srv = grpc.NewServer()
+	s.Server = grpc.NewServer()
 	s.wg = &sync.WaitGroup{}
-	RegisterLineProcessorServer(s.srv, &s)
-	reflection.Register(s.srv)
+	s.cfg = cfg
+	s.url = fmt.Sprintf("%s:%s", s.cfg.RPCServer.Host, s.cfg.RPCServer.Port)
+
+	RegisterLineProcessorServer(s.Server, &s)
+	reflection.Register(s.Server)
 
 	return &s
 }
 
-func (s *RPCServer) ListenAndServe(url string, ctx context.Context) error {
-	log.Println("rpc start on", url)
+func (s *RPCServer) ListenAndServe() error {
+	log.Println("rpc start on", s.url)
 	var err error
-	s.listener, err = net.Listen("tcp", url)
+	s.listener, err = net.Listen("tcp", s.url)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	return s.srv.Serve(s.listener)
+	return s.Server.Serve(s.listener)
 }
 
 type rawToDelta struct {
@@ -111,7 +118,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 					s.logger.Errorf("GRPC stream: (streaming error | [%s])", err.Error())
 				}
 
-				s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, data)
+				s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, respData)
 
 				s.mtx.Lock()
 				prevResp = data
@@ -126,15 +133,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 }
 
 func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) map[string]rawToDelta {
-	logrus.Println(prevResp)
 	currResp := make(map[string]rawToDelta)
-	var prevKeys []string
-
-	if len(prevResp) > 0 {
-		for k, _ := range prevResp {
-			prevKeys = append(prevKeys, k)
-		}
-	}
 
 	for _, el := range rp.sportsToUpdate {
 		val, err := s.store.GetLastValueByKey(el)
@@ -143,7 +142,7 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 		}
 
 		var res float32
-		if len(prevResp) > 0 && compareSlice(prevKeys, rp.sportsToUpdate) {
+		if len(prevResp) > 0 {
 			res = val - prevResp[el].delta
 		} else {
 			res = val
@@ -160,19 +159,13 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 	return currResp
 }
 
-func compareSlice(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSportsLinesServer) error {
 	s.process(stream)
+	return nil
+}
+
+func (s *RPCServer) Shutdown(ctx context.Context) error {
+	s.Server.GracefulStop()
+	s.logger.Infof("		========= [RPC server is stopping...]")
 	return nil
 }
