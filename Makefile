@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	go build -v ./cmd/lineProcessor
+	go build -v ./internal/cmd/lineProcessor
 
 .PHONY: tests
 tests:
