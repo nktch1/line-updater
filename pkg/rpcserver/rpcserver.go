@@ -200,6 +200,7 @@ func (s *RPCServer) Shutdown(_ context.Context) error {
 		s.done <- struct{}{}
 	}
 
+	s.clientCount = 0
 	s.Server.GracefulStop()
 	s.listener.Close()
 
