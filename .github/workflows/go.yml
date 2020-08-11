@@ -25,7 +25,6 @@ jobs:
     - name: Get dependencies
       run: |
         GO111MODULE=on 
-        go get -u github.com/go-redis/redis v6.15.8
         go get -v -t -d ./...
 
 
