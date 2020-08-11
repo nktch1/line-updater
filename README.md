@@ -26,3 +26,7 @@ make stop #остановка контейнеров в docker-compose
 * UPD_INTERVAL_SOCCER (указывается в секундах)
 * UPD_INTERVAL_BASEBALL (указывается в секундах)
 * LOG_LEVEL (logrus levels: Trace, Debug, Info, Warn, Error, Fatal, Panic)
+
+### Тестирование
+Тестирование производилось с помощью утилиты [BloomRPC](https://github.com/uw-labs/bloomrpc).
+![](./test.png)
