@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// APIServer ...
 type APIServer struct {
 	ctx    context.Context
 	cfg    *config.Config
@@ -22,7 +23,7 @@ type APIServer struct {
 	store  *store.Store
 }
 
-// конструктор api сервера
+// NewAPIServer конструктор api сервера
 func NewAPIServer(ctx context.Context) *APIServer {
 	var as APIServer
 	as.ctx = ctx
@@ -33,7 +34,7 @@ func NewAPIServer(ctx context.Context) *APIServer {
 	return &as
 }
 
-// метод отвечает за инициализацию воркеров и серверов, дожидается окончания их работы и корректно
+// Start отвечает за инициализацию воркеров и серверов, дожидается окончания их работы и корректно
 // завершает их
 func (s *APIServer) Start() error {
 	stop := make(chan os.Signal, 1)

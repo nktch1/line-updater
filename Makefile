@@ -2,8 +2,8 @@
 build:
 	go build -v ./cmd/lineProcessor -o lineProcessor
 
-.PHONY: test
-test:
+.PHONY: tests
+tests:
 	go test -v -race -timeout 30s ./...
 
 .PHONY: generate
@@ -16,7 +16,7 @@ lint:
 
 .PHONY: run
 run:
-	docker-compose up
+	docker-compose up -d
 
 .PHONY: stop
 stop:

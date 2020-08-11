@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-// модель
+// Rate модель данных
 type Rate struct {
 	RateType  Sport
 	RateValue float64
 }
 
-// переопределение метода анмаршалинга для нетипичного json
+// UnmarshalJSON - анмаршалинг для нетипичного json
 func (r *Rate) UnmarshalJSON(b []byte) error {
 	var x map[string]map[string]string
 	err := json.Unmarshal(b, &x)

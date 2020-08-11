@@ -2,8 +2,9 @@ package model
 
 import "fmt"
 
-// тип данных для спорта
 type sport int
+
+// Sport тип данных для спорта
 type Sport interface {
 	fmt.Stringer
 	CalExpr() int
@@ -14,8 +15,13 @@ type Sport interface {
 func (s sport) disabler() {}
 
 var (
-	Soccer   Sport = sport(0)
+	// Soccer - вид спорта
+	Soccer Sport = sport(0)
+
+	// Football - вид спорта
 	Football Sport = sport(1)
+
+	// Baseball - вид спорта
 	Baseball Sport = sport(2)
 )
 
@@ -44,7 +50,7 @@ func (s sport) CalExpr() int {
 	return -1
 }
 
-// конструктор для спорта
+// NewSport конструктор для спорта
 func NewSport(strSport string) Sport {
 	var s Sport
 	switch strSport {

@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// RPCServer ...
 type RPCServer struct {
 	listener net.Listener
 	Server   *grpc.Server
@@ -43,7 +44,7 @@ type requestAndPreviousDelta struct {
 	prev map[string]rawToDelta
 }
 
-// конструктор для rpc сервера
+// NewRPCServer конструктор для rpc сервера
 func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCServer {
 	var s RPCServer
 
@@ -64,7 +65,7 @@ func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCS
 	return &s
 }
 
-// запускает прослушивание порта
+// ListenAndServe запускает прослушивание порта
 func (s *RPCServer) ListenAndServe() error {
 	var err error
 	s.listener, err = net.Listen("tcp", s.url)
@@ -180,7 +181,7 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 	return currResp
 }
 
-// endpoint из .proto
+// SubscribeOnSportsLines - endpoint из .proto
 func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSportsLinesServer) error {
 	err := s.process(stream)
 	if err != nil {
@@ -190,7 +191,7 @@ func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSport
 	return nil
 }
 
-// корректное завершение работы GRPC сервера
+// Shutdown корректно завершает работу RPC сервера
 func (s *RPCServer) Shutdown(ctx context.Context) error {
 	s.logger.Infof("		========= [RPC server is stopping...]")
 

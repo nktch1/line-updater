@@ -14,7 +14,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type httpserver struct {
+// HTTPserver ...
+type HTTPserver struct {
 	router *mux.Router
 	logger *logrus.Logger
 	store  *store.Store
@@ -24,9 +25,9 @@ type httpserver struct {
 	url    string
 }
 
-// конструктор для http сервера
-func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *httpserver {
-	s := &httpserver{
+// NewHTTPServer конструктор для http сервера
+func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *HTTPserver {
+	s := &HTTPserver{
 		router: mux.NewRouter(),
 		logger: lg,
 		store:  store,
@@ -40,19 +41,19 @@ func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *h
 	return s
 }
 
-// реализация метода интерфейса
-func (s *httpserver) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP ...
+func (s *HTTPserver) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
 // добавляет обработчик GET запроса и middleware для логгирования
-func (s *httpserver) configureRouter() {
+func (s *HTTPserver) configureRouter() {
 	s.router.Use(s.logRequest)
 	s.router.HandleFunc("/ready", s.healthCheck()).Methods("GET")
 }
 
 // настройка параметров логгирования для http сервера
-func (s *httpserver) logRequest(next http.Handler) http.Handler {
+func (s *HTTPserver) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := s.logger.WithFields(logrus.Fields{
 			"remote_addr": r.RemoteAddr,
@@ -83,7 +84,7 @@ func (s *httpserver) logRequest(next http.Handler) http.Handler {
 }
 
 // endpoint, который показывает статус хранилища
-func (s *httpserver) healthCheck() http.HandlerFunc {
+func (s *HTTPserver) healthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var status int
 		if err := s.store.Ping(); err != nil {
@@ -95,7 +96,7 @@ func (s *httpserver) healthCheck() http.HandlerFunc {
 	}
 }
 
-func (s *httpserver) respond(w http.ResponseWriter, _ *http.Request, code int, data interface{}) {
+func (s *HTTPserver) respond(w http.ResponseWriter, _ *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
 	if data != nil {
 		err := json.NewEncoder(w).Encode(data)
@@ -106,8 +107,8 @@ func (s *httpserver) respond(w http.ResponseWriter, _ *http.Request, code int, d
 	}
 }
 
-// корректное завершение работы http сервера
-func (s *httpserver) Shutdown(ctx context.Context) error {
+// Shutdown корректно завершает работу http сервера
+func (s *HTTPserver) Shutdown(ctx context.Context) error {
 	if err := s.Server.Shutdown(ctx); err != nil {
 		return err
 	}

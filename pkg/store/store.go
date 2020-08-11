@@ -8,11 +8,12 @@ import (
 	"strconv"
 )
 
+// Store ...
 type Store struct {
 	Client *redis.Client
 }
 
-// конструктор и создание подключения к redis
+// New создает подключение к redis
 func New(cfg *config.Config) *Store {
 	return &Store{
 		Client: redis.NewClient(&redis.Options{
@@ -23,7 +24,7 @@ func New(cfg *config.Config) *Store {
 	}
 }
 
-// получение последнего значения по заданному ключу из базы данных
+// GetLastValueByKey получает последнее значение по заданному ключу из базы данных
 func (s *Store) GetLastValueByKey(key string) (float32, error) {
 	var val float64
 	var err error
@@ -45,7 +46,7 @@ func (s *Store) GetLastValueByKey(key string) (float32, error) {
 	return float32(val), out.Err()
 }
 
-// запись в базу данных
+// Set производит запись в базу данных
 func (s *Store) Set(key string, val interface{}) error {
 	err := s.Client.RPush(key, val)
 	if err.Err() != nil {
@@ -55,7 +56,7 @@ func (s *Store) Set(key string, val interface{}) error {
 	return nil
 }
 
-// проверка готовности базы даных
+// Ping проверяет готовности базы данных
 func (s *Store) Ping() error {
 	_, err := s.Client.Ping().Result()
 	if err != nil {

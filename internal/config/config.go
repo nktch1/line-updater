@@ -4,6 +4,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+// Config ...
 type Config struct {
 	Request struct {
 		UpdateIntervalFootball int `envconfig:"UPD_INTERVAL_FOOTBALL"`
@@ -32,6 +33,7 @@ type Config struct {
 	}
 }
 
+// New загружает значения переменных среды
 func New() *Config {
 	var cfg Config
 	err := envconfig.Process("", &cfg)

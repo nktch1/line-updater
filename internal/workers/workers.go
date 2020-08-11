@@ -19,6 +19,7 @@ type worker struct {
 	updTime int
 }
 
+// BackgroundWorkers ...
 type BackgroundWorkers struct {
 	workers []worker
 	cache   *store.Store
@@ -27,7 +28,7 @@ type BackgroundWorkers struct {
 	done    chan struct{}
 }
 
-// конструктор для воркеров
+// New конструктор для воркеров
 func New(cfg *config.Config, lg *logrus.Logger, cache *store.Store, w []model.Sport) *BackgroundWorkers {
 	var bckWorkers BackgroundWorkers
 	bckWorkers.cache = cache
@@ -134,7 +135,7 @@ func merge(rates ...<-chan model.Rate) <-chan model.Rate {
 	return out
 }
 
-// проходит по списку спортов и для каждого запрашивает значения у line-provider
+// RunWorkers проходит по списку спортов и для каждого запрашивает значения у line-provider
 func (w *BackgroundWorkers) RunWorkers() error {
 	var channels []<-chan model.Rate
 	in := w.gen()
@@ -158,7 +159,7 @@ func (w *BackgroundWorkers) RunWorkers() error {
 	return nil
 }
 
-// корректное завершение работы воркеров
+// Shutdown корректно завершает работу воркеров
 func (w *BackgroundWorkers) Shutdown(ctx context.Context) error {
 	w.done <- struct{}{}
 	w.logger.Infof("		========= [workers are stopping...]")
