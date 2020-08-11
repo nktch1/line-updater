@@ -16,7 +16,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: ^1.14.4
       id: go
 
     - name: Check out code into the Go module directory
@@ -24,6 +24,8 @@ jobs:
 
     - name: Get dependencies
       run: |
+        GO111MODULE=on 
+        go get -u github.com/go-redis/redis v6.15.8
         go get -v -t -d ./...
 
 
