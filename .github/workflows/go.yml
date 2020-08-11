@@ -27,9 +27,13 @@ jobs:
         GO111MODULE=on 
         go get -v -t -d ./...
 
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v1.2.1
 
     - name: Build
       run: go build -v ./cmd/lineProcessor
 
     - name: Test
       run: go test -v -race -timeout 30s ./...
+
+
