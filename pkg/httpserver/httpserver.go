@@ -21,7 +21,6 @@ type HTTPserver struct {
 	store  *store.Store
 	config *config.Config
 	Server *http.Server
-	ctx    context.Context
 	url    string
 }
 

@@ -24,7 +24,6 @@ type RPCServer struct {
 	prevResp    map[string]float32
 	mtx         *sync.Mutex
 	wg          *sync.WaitGroup
-	ctx         context.Context
 	cfg         *config.Config
 	url         string
 	done        chan struct{}

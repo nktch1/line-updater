@@ -17,16 +17,14 @@ import (
 
 // APIServer ...
 type APIServer struct {
-	ctx    context.Context
 	cfg    *config.Config
 	logger *logrus.Logger
 	store  *store.Store
 }
 
 // NewAPIServer конструктор api сервера
-func NewAPIServer(ctx context.Context) *APIServer {
+func NewAPIServer() *APIServer {
 	var as APIServer
-	as.ctx = ctx
 	as.cfg = config.New()
 	as.logger = logger.New(as.cfg)
 	as.store = store.New(as.cfg)
@@ -44,9 +42,9 @@ func (s *APIServer) Start() error {
 	httpServer := httpserver.NewHTTPServer(s.cfg, s.logger, s.store)
 
 	// тест корректного завершения всех воркеров, rpc сервера и http сервера
-	time.AfterFunc(20*time.Second, func() {
-		stop <- os.Signal(os.Interrupt)
-	})
+	//time.AfterFunc(20*time.Second, func() {
+	//	stop <- os.Signal(os.Interrupt)
+	//})
 
 	w := workers.New(s.cfg, s.logger, s.store,
 		[]model.Sport{
