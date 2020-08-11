@@ -6,7 +6,7 @@
 make build #запуск сборки
 make generate #компиляция .proto файла 
 make lint #запуск линтера
-make test #запуск тестов
+make tests #запуск тестов
 make run #запуск контейнеров в docker-compose
 make stop #остановка контейнеров в docker-compose
 ```
