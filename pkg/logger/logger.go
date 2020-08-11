@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/nikitych1w/softpro-task/internal/config"
+	"github.com/nikitych1w/softpro-task/pkg/config"
 	"github.com/sirupsen/logrus"
 )
 

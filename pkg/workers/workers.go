@@ -3,8 +3,8 @@ package workers
 import (
 	"context"
 	"fmt"
-	"github.com/nikitych1w/softpro-task/internal/config"
-	"github.com/nikitych1w/softpro-task/internal/model"
+	"github.com/nikitych1w/softpro-task/pkg/config"
+	"github.com/nikitych1w/softpro-task/pkg/model"
 	"github.com/nikitych1w/softpro-task/pkg/store"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nikitych1w/softpro-task/internal/config"
+	"github.com/nikitych1w/softpro-task/pkg/config"
 	"github.com/nikitych1w/softpro-task/pkg/store"
 	"net/http"
 	"time"

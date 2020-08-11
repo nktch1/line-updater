@@ -3,7 +3,7 @@ package store
 import (
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/nikitych1w/softpro-task/internal/config"
+	"github.com/nikitych1w/softpro-task/pkg/config"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )

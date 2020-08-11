@@ -2,13 +2,13 @@ package internal
 
 import (
 	"context"
-	"github.com/nikitych1w/softpro-task/internal/config"
-	"github.com/nikitych1w/softpro-task/internal/httpserver"
-	"github.com/nikitych1w/softpro-task/internal/model"
-	"github.com/nikitych1w/softpro-task/internal/rpcserver"
-	"github.com/nikitych1w/softpro-task/internal/workers"
+	"github.com/nikitych1w/softpro-task/pkg/config"
+	"github.com/nikitych1w/softpro-task/pkg/httpserver"
 	"github.com/nikitych1w/softpro-task/pkg/logger"
+	"github.com/nikitych1w/softpro-task/pkg/model"
+	"github.com/nikitych1w/softpro-task/pkg/rpcserver"
 	store "github.com/nikitych1w/softpro-task/pkg/store"
+	"github.com/nikitych1w/softpro-task/pkg/workers"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"

@@ -38,16 +38,19 @@ func New() *Config {
 	var cfg Config
 	err := envconfig.Process("", &cfg)
 	if err != nil {
-		//cfg.Request.UpdateIntervalBaseball = 12
-		//cfg.Request.UpdateIntervalFootball = 12
-		//cfg.Request.UpdateIntervalSoccer = 12
-		//cfg.Database.Username = "user"
-		//cfg.Database.Password = "123"
-		//cfg.Server.Host = "localhost"
-		//cfg.Server.Port = "8080"
-
-		//return &cfg, fmt.Errorf("\tconfig file parsing failed, | [%s]", err.Error())
-		return &cfg
+		cfg.Request.UpdateIntervalBaseball = 1
+		cfg.Request.UpdateIntervalFootball = 2
+		cfg.Request.UpdateIntervalSoccer = 3
+		cfg.Database.Username = ""
+		cfg.Database.Password = ""
+		cfg.Server.Host = "localhost"
+		cfg.Server.Port = "8080"
+		cfg.Log.Level = "debug"
+		cfg.RPCServer.Host = ""
+		cfg.RPCServer.Port = "8888"
+		cfg.Database.Host = "redis"
+		cfg.Database.Port = "6379"
+		cfg.LineProvider.URL = "http://lineprovider:8000/api/v1/lines"
 	}
 
 	return &cfg
