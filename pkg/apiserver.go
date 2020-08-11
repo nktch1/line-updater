@@ -44,9 +44,9 @@ func (s *APIServer) Start() error {
 	httpServer := httpserver.NewHTTPServer(s.cfg, s.logger, s.store)
 
 	// тест корректного завершения всех воркеров, rpc сервера и http сервера
-	//time.AfterFunc(20 * time.Second, func() {
-	//	stop <- os.Signal(os.Interrupt)
-	//})
+	time.AfterFunc(20*time.Second, func() {
+		stop <- os.Signal(os.Interrupt)
+	})
 
 	w := workers.New(s.cfg, s.logger, s.store,
 		[]model.Sport{

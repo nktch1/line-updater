@@ -160,7 +160,7 @@ func (w *BackgroundWorkers) RunWorkers() error {
 }
 
 // Shutdown корректно завершает работу воркеров
-func (w *BackgroundWorkers) Shutdown(ctx context.Context) error {
+func (w *BackgroundWorkers) Shutdown(_ context.Context) error {
 	w.done <- struct{}{}
 	w.logger.Infof("		========= [workers are stopping...]")
 	return nil

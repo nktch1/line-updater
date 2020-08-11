@@ -17,17 +17,18 @@ import (
 
 // RPCServer ...
 type RPCServer struct {
-	listener net.Listener
-	Server   *grpc.Server
-	logger   *logrus.Logger
-	store    *store.Store
-	prevResp map[string]float32
-	mtx      *sync.Mutex
-	wg       *sync.WaitGroup
-	ctx      context.Context
-	cfg      *config.Config
-	url      string
-	done     chan struct{}
+	listener    net.Listener
+	Server      *grpc.Server
+	logger      *logrus.Logger
+	store       *store.Store
+	prevResp    map[string]float32
+	mtx         *sync.Mutex
+	wg          *sync.WaitGroup
+	ctx         context.Context
+	cfg         *config.Config
+	url         string
+	done        chan struct{}
+	clientCount int
 }
 
 type reqParams struct {
@@ -103,6 +104,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 
 	// чтение из канала, сравнение с предыдущим значение и высчитывание дельты
 	for request := range subscribeRequests {
+		s.clientCount++
 		var val int
 		var err error
 
@@ -192,10 +194,10 @@ func (s *RPCServer) SubscribeOnSportsLines(stream LineProcessor_SubscribeOnSport
 }
 
 // Shutdown корректно завершает работу RPC сервера
-func (s *RPCServer) Shutdown(ctx context.Context) error {
+func (s *RPCServer) Shutdown(_ context.Context) error {
 	s.logger.Infof("		========= [RPC server is stopping...]")
 
-	for {
+	for i := 0; i < s.clientCount; i++ {
 		s.done <- struct{}{}
 	}
 
