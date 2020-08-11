@@ -19,7 +19,6 @@ make stop #остановка контейнеров в docker-compose
 * envconfig
 * testify
 * grpc
-* protobuf
 
 ### Список параметров
 Параметры задаются в файле docker-compose.yml
