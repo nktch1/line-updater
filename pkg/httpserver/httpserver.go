@@ -35,7 +35,9 @@ func NewHTTPServer(cfg *config.Config, lg *logrus.Logger, store *store.Store) *H
 	}
 
 	s.url = fmt.Sprintf("%s:%s", s.config.Server.Host, s.config.Server.Port)
+	s.Server.Addr = s.url
 	s.configureRouter()
+	s.Server.Handler = s.router
 
 	return s
 }

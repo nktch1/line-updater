@@ -7,12 +7,13 @@ import (
 	"github.com/nikitych1w/softpro-task/pkg/logger"
 	"github.com/nikitych1w/softpro-task/pkg/model"
 	"github.com/nikitych1w/softpro-task/pkg/rpcserver"
-	store "github.com/nikitych1w/softpro-task/pkg/store"
 	"github.com/nikitych1w/softpro-task/pkg/workers"
-	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"time"
+
+	store "github.com/nikitych1w/softpro-task/pkg/store"
+	"github.com/sirupsen/logrus"
 )
 
 // APIServer ...
