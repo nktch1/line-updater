@@ -22,7 +22,6 @@ type RPCServer struct {
 	logger      *logrus.Logger
 	store       *store.Store
 	prevResp    map[string]float32
-	mtx         *sync.Mutex
 	wg          *sync.WaitGroup
 	cfg         *config.Config
 	url         string
@@ -51,7 +50,6 @@ func NewRPCServer(cfg *config.Config, lg *logrus.Logger, str *store.Store) *RPCS
 	s.logger = lg
 	s.store = str
 	s.prevResp = make(map[string]float32)
-	s.mtx = &sync.Mutex{}
 	s.Server = grpc.NewServer()
 	s.wg = &sync.WaitGroup{}
 	s.cfg = cfg
@@ -138,9 +136,7 @@ func (s *RPCServer) process(stream LineProcessor_SubscribeOnSportsLinesServer) e
 
 					s.logger.Info("\t ---> [GRPC] : SENT TO STREAM ", rp, respData)
 
-					s.mtx.Lock()
 					prevResp = data
-					s.mtx.Unlock()
 
 					time.Sleep(time.Duration(rp.updTime) * time.Second)
 				}
@@ -171,12 +167,10 @@ func (s *RPCServer) buildResponse(rp reqParams, prevResp map[string]rawToDelta) 
 			res = val
 		}
 
-		s.mtx.Lock()
 		currResp[el] = rawToDelta{
 			raw:   val,
 			delta: res,
 		}
-		s.mtx.Unlock()
 	}
 
 	return currResp
