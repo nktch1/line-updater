@@ -6,4 +6,4 @@ EXPOSE 8080
 EXPOSE 8888
 RUN go mod download
 RUN go run cmd/lineProcessor/main.go
-#RUN go build -v ./cmd/lineProcessor -o lineProcessor
+#RUN go build -v ./cmd/line-updater -o line-updater
